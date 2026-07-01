@@ -1,0 +1,83 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  ogImage?: string;
+  ogType?: string;
+  canonicalURL?: string;
+  publishedDate?: string;
+  tags?: string[];
+}
+
+const {
+  title,
+  description,
+  ogImage = '/images/og-default.png',
+  ogType = 'website',
+  canonicalURL = Astro.url.href,
+  publishedDate,
+  tags = [],
+} = Astro.props;
+
+const siteName = 'Prateek Tewary';
+const authorName = 'Prateek Tewary';
+
+const canonical = new URL(canonicalURL, Astro.url.origin).href;
+const absoluteOgImage = new URL(ogImage, Astro.url.origin).href;
+
+const jsonLd =
+  ogType === 'article'
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: title,
+        description,
+        datePublished: publishedDate,
+        author: {
+          '@type': 'Person',
+          name: authorName,
+        },
+        image: absoluteOgImage,
+        mainEntityOfPage: {
+          '@type': 'WebPage',
+          '@id': canonical,
+        },
+      }
+    : {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: siteName,
+        url: canonical,
+        description,
+      };
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={absoluteOgImage} />
+<meta property="og:url" content={canonical} />
+<meta property="og:type" content={ogType} />
+<meta property="og:site_name" content={siteName} />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={absoluteOgImage} />
+
+{
+  publishedDate && (
+    <meta property="article:published_time" content={publishedDate} />
+  )
+}
+
+{
+  tags.map((tag) => (
+    <meta property="article:tag" content={tag} />
+  ))
+}
+
+<script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
