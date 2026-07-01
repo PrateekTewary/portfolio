@@ -1,5 +1,7 @@
 ---
 import '../styles/global.css';
+
+import SEO from '../components/SEO.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 
@@ -7,16 +9,19 @@ interface Props {
   title: string;
   description: string;
   ogImage?: string;
+  ogType?: string;
+  publishedDate?: string;
+  tags?: string[];
 }
 
 const {
   title,
   description,
-  ogImage = './og-default.png',
+  ogImage,
+  ogType,
+  publishedDate,
+  tags,
 } = Astro.props;
-
-void description;
-void ogImage;
 ---
 
 <!DOCTYPE html>
@@ -24,7 +29,16 @@ void ogImage;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
-    <title>{title}</title>
+
+    <SEO
+      title={title}
+      description={description}
+      ogImage={ogImage}
+      ogType={ogType}
+      publishedDate={publishedDate}
+      tags={tags}
+    />
+
     <slot name="head" />
   </head>
 
