@@ -1,0 +1,55 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BlogCard from '../../components/BlogCard.astro';
+
+type BlogPost = CollectionEntry<'blog'>;
+
+const posts: BlogPost[] = await getCollection('blog');
+
+const publishedPosts = posts
+  .filter((post: BlogPost) => !post.data.draft)
+  .sort(
+    (a: BlogPost, b: BlogPost) =>
+      b.data.date.getTime() - a.data.date.getTime()
+  );
+---
+
+<BaseLayout
+  title="Blog - YOUR_NAME"
+  description="Articles about software engineering, technology and more."
+  ogType="website"
+>
+  <section class="space-y-10">
+    <div class="space-y-3">
+      <h1 class="text-4xl font-bold tracking-tight text-neutral-950">
+        Blog
+      </h1>
+
+      <p class="max-w-2xl text-lg leading-8 text-neutral-700">
+        I write about software engineering, technology, and things I'm learning.
+      </p>
+    </div>
+
+    {
+      publishedPosts.length > 0 ? (
+        <div class="space-y-6">
+          {publishedPosts.map((post: BlogPost) => (
+            <BlogCard
+              title={post.data.title}
+              description={post.data.description}
+              date={post.data.date.toISOString()}
+              slug={post.id}
+              tags={post.data.tags}
+            />
+          ))}
+        </div>
+      ) : (
+        <p class="text-neutral-600">
+          No posts yet. Check back soon!
+        </p>
+      )
+    }
+  </section>
+</BaseLayout>
