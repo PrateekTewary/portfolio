@@ -1,0 +1,217 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
+
+import cookingHero from '../../assets/cooking-hero.webp';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import CookingCard from '../../components/CookingCard.astro';
+
+const entries = (await getCollection('cooking', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const sections = [
+  {
+    id: 'kitchen-notes',
+    title: 'Kitchen notes',
+    description: 'Photos, experiments, and lessons from whatever is cooking.',
+    entries: entries.filter((entry) => entry.data.kind === 'kitchen-note'),
+    emptyTitle: 'A space for the process, too.',
+    emptyDescription: 'Cooking projects, snapshots, and notes will find a home here.',
+  },
+  {
+    id: 'recipes',
+    title: 'Recipes',
+    description: 'Ingredients, steps, and the little details that make a dish.',
+    entries: entries.filter((entry) => entry.data.kind === 'recipe'),
+    emptyTitle: 'Something good is on the way.',
+    emptyDescription: 'My first recipe will be here soon. Check back for a little kitchen inspiration.',
+  },
+];
+---
+
+<BaseLayout
+  title="Cooking - Prateek Tewary"
+  description="Recipes, cooking projects, and notes from Prateek Tewary's kitchen."
+  ogType="website"
+>
+  <section class="relative isolate overflow-hidden rounded-xl bg-neutral-950 px-5 py-8 sm:px-8 sm:py-10">
+    <div class="hero-photo" aria-hidden="true">
+      <Image
+        src={cookingHero}
+        alt=""
+        widths={[540, 1080]}
+        sizes="(min-width: 1344px) 1232px, calc(100vw - 32px)"
+        class="hero-image"
+        loading="eager"
+      />
+    </div>
+
+    <div class="relative z-10 space-y-3">
+      <p class="text-xs font-semibold uppercase tracking-widest text-orange-100">
+        Curiously learning
+      </p>
+      <h1 class="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+        Straight from kitchen
+      </h1>
+      <p class="max-w-2xl text-[15px] leading-7 text-neutral-100 italic">
+        A catalog of what I am learning and making. The intent is to put on display my capability and make way for meeting opportunity to learn more over time. Who knows, maybe even put this out someday!
+      </p>
+      <div class="flex flex-wrap gap-3 pt-2">
+        <a
+          href="#recipes"
+          class="rounded-md bg-orange-100 px-4 py-2.5 text-sm font-medium text-orange-950 transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+        >
+          Browse recipes <span aria-hidden="true">&darr;</span>
+        </a>
+        <a
+          href="#kitchen-notes"
+          class="rounded-md border border-white/50 bg-neutral-950/40 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-neutral-950/70 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+        >
+          Kitchen notes
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="mt-5 flex items-center justify-between gap-4 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3">
+    <div>
+      <p class="text-sm font-semibold text-neutral-900">Veg only</p>
+      <p class="text-xs text-neutral-600">Hide non-veg recipes and kitchen notes.</p>
+    </div>
+    <label class="veg-toggle" for="veg-only-toggle">
+      <input type="checkbox" id="veg-only-toggle" class="sr-only" />
+      <span class="veg-toggle-track" aria-hidden="true"></span>
+      <span class="sr-only">Toggle to hide non-veg items</span>
+    </label>
+  </div>
+
+  {
+    sections.map((section) => (
+      <section id={section.id} aria-labelledby={`${section.id}-heading`} class="mt-8 scroll-mt-16">
+        <div class="mb-4 space-y-1 border-b border-neutral-200 pb-3">
+          <h2 id={`${section.id}-heading`} class="text-xl font-semibold tracking-tight text-neutral-950">
+            {section.title}
+          </h2>
+          <p class="text-[13px] leading-5 text-neutral-600">{section.description}</p>
+        </div>
+
+        {section.entries.length > 0 ? (
+          <>
+            <div class="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" data-entry-grid>
+              {section.entries.map((entry) => <CookingCard entry={entry} />)}
+            </div>
+            <p class="mt-6 hidden rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-8 text-sm text-neutral-600" data-veg-only-empty>
+              No veg {section.title.toLowerCase()} yet. Turn off "Veg only" to see everything.
+            </p>
+          </>
+        ) : (
+          <div class="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-8">
+            <p class="font-medium text-neutral-800">{section.emptyTitle}</p>
+            <p class="mt-2 text-sm leading-6 text-neutral-600">{section.emptyDescription}</p>
+          </div>
+        )}
+      </section>
+    ))
+  }
+</BaseLayout>
+
+<script>
+  const STORAGE_KEY = 'cooking-veg-only';
+  const toggle = document.getElementById('veg-only-toggle') as HTMLInputElement | null;
+
+  function applyVegOnly(vegOnly: boolean) {
+    document.querySelectorAll<HTMLElement>('[data-entry-grid]').forEach((grid) => {
+      const cards = Array.from(grid.querySelectorAll<HTMLElement>('[data-veg]'));
+      let visibleCount = 0;
+
+      cards.forEach((card) => {
+        const isVeg = card.dataset.veg === 'true';
+        const hide = vegOnly && !isVeg;
+        card.classList.toggle('hidden', hide);
+        if (!hide) visibleCount += 1;
+      });
+
+      const emptyMessage = grid.parentElement?.querySelector<HTMLElement>('[data-veg-only-empty]');
+      emptyMessage?.classList.toggle('hidden', visibleCount > 0);
+    });
+  }
+
+  const stored = localStorage.getItem(STORAGE_KEY) === 'true';
+  if (toggle) {
+    toggle.checked = stored;
+    applyVegOnly(stored);
+
+    toggle.addEventListener('change', () => {
+      localStorage.setItem(STORAGE_KEY, String(toggle.checked));
+      applyVegOnly(toggle.checked);
+    });
+  }
+</script>
+
+<style>
+  .hero-photo {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .hero-photo :global(.hero-image) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 95%;
+  }
+
+  .hero-photo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      100deg,
+      rgb(23 23 23 / 50%),
+      rgb(23 23 23 / 50%),
+      rgb(23 23 23 / 5%)
+    );
+  }
+
+  .veg-toggle {
+    position: relative;
+    display: inline-flex;
+    cursor: pointer;
+  }
+
+  .veg-toggle-track {
+    display: inline-block;
+    width: 2.75rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    background-color: #d4d4d4;
+    transition: background-color 0.2s ease;
+  }
+
+  .veg-toggle-track::before {
+    content: '';
+    display: block;
+    width: 1.125rem;
+    height: 1.125rem;
+    margin: 0.1875rem;
+    border-radius: 9999px;
+    background-color: #ffffff;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 20%);
+    transition: transform 0.2s ease;
+  }
+
+  .veg-toggle input:checked + .veg-toggle-track {
+    background-color: #16a34a;
+  }
+
+  .veg-toggle input:checked + .veg-toggle-track::before {
+    transform: translateX(1.25rem);
+  }
+
+  .veg-toggle input:focus-visible + .veg-toggle-track {
+    outline: 2px solid #9a3412;
+    outline-offset: 2px;
+  }
+</style>

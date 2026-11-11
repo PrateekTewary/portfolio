@@ -21,20 +21,20 @@ const publishedPosts = posts
   description="Articles about software engineering, technology and more."
   ogType="website"
 >
-  <section class="space-y-10">
-    <div class="space-y-3">
-      <h1 class="text-4xl font-bold tracking-tight text-neutral-950">
+  <section class="space-y-6">
+    <div class="space-y-2">
+      <h1 class="text-3xl font-semibold tracking-tight text-neutral-950 sm:text-4xl">
         Blog
       </h1>
 
-      <p class="max-w-2xl text-lg leading-8 text-neutral-700">
+      <p class="max-w-2xl text-[15px] leading-7 text-neutral-700">
         I write about software engineering, technology, and things I'm learning.
       </p>
     </div>
 
     {
       publishedPosts.length > 0 ? (
-        <div class="space-y-6">
+        <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {publishedPosts.map((post: BlogPost) => (
             <BlogCard
               title={post.data.title}

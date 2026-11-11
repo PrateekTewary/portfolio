@@ -1,0 +1,114 @@
+---
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  entry: CollectionEntry<'cooking'>;
+}
+
+const { entry } = Astro.props;
+const { title, description, date, kind, isVeg, cover, tags, prepMinutes, cookMinutes, stages } = entry.data;
+const isRecipe = kind === 'recipe';
+const descriptionWords = description.trim().split(/\s+/);
+const truncatedDescription =
+  descriptionWords.length > 14 ? `${descriptionWords.slice(0, 14).join(' ')}…` : description;
+const formattedDate = date.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+---
+
+<a
+  href={`/cooking/${entry.id}`}
+  data-veg={isVeg}
+  class:list={[
+    'group block h-full overflow-hidden rounded-lg border transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-800',
+    isVeg
+      ? 'border-green-200/70 bg-green-50/40 hover:border-green-400'
+      : 'border-red-200/70 bg-red-50/40 hover:border-red-400',
+  ]}
+>
+  <article class="flex h-full sm:flex-col">
+    {
+      cover && (
+        <div class="w-28 shrink-0 sm:w-full">
+          <Image
+            src={cover.src}
+            alt={cover.alt}
+            widths={[240, 480, 720]}
+            sizes="(min-width: 768px) 240px, (min-width: 640px) 330px, 112px"
+            class="h-full w-full object-cover sm:aspect-[16/10] sm:h-auto"
+            loading="lazy"
+          />
+        </div>
+      )
+    }
+
+    <div class="flex min-w-0 flex-1 flex-col items-start gap-1.5 p-3">
+      <div class="flex w-full items-center justify-between gap-2">
+        <time datetime={date.toISOString()} class="text-xs text-neutral-500">
+          {formattedDate}
+        </time>
+        <span
+          class:list={[
+            'inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-medium',
+            isVeg ? 'bg-green-100/70 text-green-800' : 'bg-red-100/70 text-red-800',
+          ]}
+        >
+          <span
+            aria-hidden="true"
+            class:list={[
+              'h-1.5 w-1.5 rounded-full',
+              isVeg ? 'bg-green-600' : 'bg-red-600',
+            ]}
+          />
+          {isVeg ? 'Veg' : 'Non-veg'}
+        </span>
+      </div>
+
+      <h3 class="font-sans text-[15px] font-semibold leading-snug tracking-tight text-neutral-900 group-hover:text-orange-900">
+        {title}
+      </h3>
+
+      <p class="truncate-ellipsis text-[13px] leading-5 text-neutral-600">{truncatedDescription}</p>
+
+      {
+        isRecipe && (prepMinutes !== undefined || cookMinutes !== undefined) && (
+          <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-neutral-600">
+            {prepMinutes !== undefined && <span>Prep: {prepMinutes} min</span>}
+            {cookMinutes !== undefined && <span>Cook: {cookMinutes} min</span>}
+          </div>
+        )
+      }
+
+      {
+        tags.length > 0 && (
+          <ul class="flex flex-wrap gap-1.5" aria-label="Tags">
+            {tags.slice(0, 3).map((tag) => (
+              <li class="rounded-full bg-orange-50 px-2 py-0.5 text-xs text-orange-900">
+                {tag}
+              </li>
+            ))}
+          </ul>
+        )
+      }
+
+      <span class="mt-auto pt-1 text-xs font-medium text-orange-900">
+        {stages.length > 0 ? 'View photo diary' : isRecipe ? 'Read recipe' : 'Read note'}
+        <span aria-hidden="true">&rarr;</span>
+      </span>
+    </div>
+  </article>
+</a>
+
+<style>
+  .truncate-ellipsis {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+</style>

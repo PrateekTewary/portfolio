@@ -5,6 +5,7 @@ const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
   { href: '/blog', label: 'Blog' },
+  { href: '/cooking', label: 'Cooking' },
 ];
 
 const isActive = (href: string) => {
@@ -16,20 +17,21 @@ const isActive = (href: string) => {
 };
 ---
 
-<header class="sticky top-0 z-50 bg-white border-b border-neutral-200">
-  <nav class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-    <a href="/" class="text-base font-semibold tracking-tight text-neutral-950">
+<!-- Phones: brand above the links and the header scrolls away. From 640px: one row, sticky. -->
+<header class="z-50 border-b border-neutral-200 bg-white sm:sticky sm:top-0">
+  <nav class="mx-auto flex max-w-7xl flex-col px-4 py-1 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+    <a href="/" class="inline-flex min-h-11 items-center font-[family-name:var(--font-fraunces)] text-lg font-semibold tracking-tight text-neutral-950">
       YOUR_NAME
     </a>
 
-    <div class="flex items-center gap-4 text-sm">
+    <div class="-mx-2 flex items-center justify-between text-sm sm:mx-0 sm:-mr-2 sm:justify-end">
       {
         navLinks.map((link) => (
           <a
             href={link.href}
             aria-current={isActive(link.href) ? 'page' : undefined}
             class:list={[
-              'transition-colors',
+              'inline-flex min-h-11 items-center px-2 transition-colors',
               isActive(link.href)
                 ? 'text-neutral-950 font-medium'
                 : 'text-neutral-600 hover:text-neutral-950',

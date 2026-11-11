@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { Font } from 'astro:assets';
 
 import SEO from '../components/SEO.astro';
 import Header from '../components/Header.astro';
@@ -28,7 +29,7 @@ const {
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <SEO
       title={title}
@@ -39,15 +40,18 @@ const {
       tags={tags}
     />
 
+    <Font cssVariable="--font-inter" preload={[{ weight: 400, style: 'normal', subset: 'latin' }]} />
+    <Font cssVariable="--font-fraunces" preload={[{ weight: 600, style: 'normal', subset: 'latin' }]} />
+
     <link rel="alternate" type="application/rss+xml" title="YOUR_NAME's Blog" href="/rss.xml" />
     
     <slot name="head" />
   </head>
 
-  <body class="min-h-screen bg-white text-neutral-900 flex flex-col">
+  <body class="min-h-screen bg-white text-neutral-800 flex flex-col">
     <Header />
 
-    <main class="flex-1 max-w-3xl mx-auto px-4 py-8 w-full">
+    <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
       <slot />
     </main>
 

@@ -1,0 +1,30 @@
+---
+title: "Simple Chocolate treat"
+tags: ["Kitchen journal"]
+description: "Simple instagram recipie"
+date: 2026-11-02
+kind: kitchen-note
+draft: false
+cover:
+  src: './images/Choco-ball/Choco-balls-in-tiffin.jpg'
+  alt: "Chocolate treat in tiffin"
+---
+
+import ImageGallery from '../../components/ImageGallery.astro';
+import ChocoBallsInTiffin from './images/Choco-ball/Choco-balls-in-tiffin.jpg';
+import ChocoBallsDistributedInPlate from './images/Choco-ball/Choco-balls-distributed-in-plate.jpg';
+import ChocoBallDistributedInPlateAesthetic from './images/Choco-ball/Choco-ball-distributed-in-plate-aesthetic.jpg';
+
+Again one of the instagram recipies.
+Grinded walnuts and dates and made ball of those.
+Melted compound chocolate and coated them.
+Dry coconut to top it. Put them in fridge and gave them few turns in between to retain the round shape.
+
+<ImageGallery
+  layout="feature-grid"
+  photos={[
+    { src: ChocoBallDistributedInPlateAesthetic, alt: "Chocolate treat on plate", caption: "Chocolate treat laid out in plate"},
+    { src: ChocoBallsDistributedInPlate, alt: "Chocolate treat on plate", caption: "Chocolate treat in plated"},
+    { src: ChocoBallsInTiffin, alt: "Chocolate treats packed in tiffin", caption: "Choco treat packed in tiffin" },
+  ]}
+/>

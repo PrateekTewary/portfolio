@@ -1,0 +1,31 @@
+---
+import ImageCarousel, { type GalleryPhoto } from './gallery/ImageCarousel.astro';
+import ImageGrid, { type GridLayout } from './gallery/ImageGrid.astro';
+
+export type GalleryLayout = 'carousel' | GridLayout;
+
+interface Props {
+  photos: GalleryPhoto[];
+  /** Pick how the photos are arranged: a one-at-a-time carousel, or one of a few grid styles. */
+  layout?: GalleryLayout;
+  /** Optional heading shown above the photos. */
+  title?: string;
+}
+
+const { photos, layout = 'grid', title } = Astro.props;
+---
+
+<section class="image-gallery">
+  {title && <h3 class="image-gallery-title">{title}</h3>}
+  {layout === 'carousel' ? <ImageCarousel photos={photos} /> : <ImageGrid photos={photos} layout={layout} />}
+</section>
+
+<style>
+  .image-gallery-title {
+    margin-bottom: 0.75rem;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: #171717;
+  }
+</style>

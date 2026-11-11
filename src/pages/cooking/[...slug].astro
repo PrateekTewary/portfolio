@@ -1,0 +1,181 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import CookingStages from '../../components/CookingStages.astro';
+import ImageGallery from '../../components/ImageGallery.astro';
+import { socialImageUrl } from '../../utils/images';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('cooking', ({ data }) => !data.draft);
+
+  return entries.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+interface Props {
+  entry: CollectionEntry<'cooking'>;
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const { title, description, date, kind, cover, tags, prepMinutes, cookMinutes, servings, stages, galleries } = entry.data;
+const isRecipe = kind === 'recipe';
+const hasStages = stages.length > 0;
+const ogImage = cover ? await socialImageUrl(cover.src) : undefined;
+const formattedDate = date.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+---
+
+<BaseLayout
+  title={`${title} - Prateek Tewary`}
+  description={description}
+  ogImage={ogImage}
+  ogType="article"
+  publishedDate={date.toISOString()}
+  tags={tags}
+>
+  <article class="mx-auto max-w-6xl space-y-5">
+    <a
+      href="/cooking"
+      class="inline-flex min-h-11 items-center text-sm font-medium text-orange-900 transition-colors hover:text-orange-950"
+    >
+      <span aria-hidden="true">&larr;&nbsp;</span> Back to cooking
+    </a>
+
+    <div class:list={['entry-intro', { 'photo-story': hasStages, 'photo-story-with-cover': hasStages && cover, 'entry-intro-with-cover': !hasStages && cover }]}>
+      <header class="space-y-3">
+        <p class="text-xs font-semibold uppercase tracking-widest text-orange-900">
+          {hasStages ? 'A kitchen photo diary' : isRecipe ? 'Recipe' : 'Kitchen note'}
+        </p>
+        <h1 class="text-3xl font-semibold tracking-tight text-neutral-950 sm:text-4xl">
+          {title}
+        </h1>
+        <p class="text-[15px] leading-7 text-neutral-700">{description}</p>
+        <div class="flex flex-wrap items-center gap-3 text-[13px] text-neutral-500">
+          <time datetime={date.toISOString()}>{formattedDate}</time>
+          {
+            tags.length > 0 && (
+              <ul class="flex flex-wrap gap-1.5" aria-label="Tags">
+                {tags.map((tag) => (
+                  <li class="rounded-full bg-orange-50 px-2 py-0.5 text-xs text-orange-900">
+                    {tag}
+                  </li>
+                ))}
+              </ul>
+            )
+          }
+        </div>
+        {
+          hasStages && (
+            <a href="#cooking-process" class="inline-flex items-center gap-2 pt-3 text-sm font-semibold text-orange-900 underline decoration-orange-300 underline-offset-4 hover:text-orange-950">
+              See the process <span aria-hidden="true">&darr;</span>
+            </a>
+          )
+        }
+      </header>
+
+      {
+        cover && (
+          <Image
+            src={cover.src}
+            alt={cover.alt}
+            widths={[360, 720, 1440]}
+            sizes={hasStages
+              ? '(min-width: 768px) 368px, (min-width: 640px) 50vw, calc(100vw - 32px)'
+              : '(min-width: 768px) 320px, calc(100vw - 32px)'}
+            class:list={['entry-cover w-full', hasStages ? 'h-auto' : 'aspect-[4/3] rounded-lg object-cover']}
+            loading="eager"
+          />
+        )
+      }
+    </div>
+
+    {
+      isRecipe && (prepMinutes !== undefined || cookMinutes !== undefined || servings) && (
+        <dl class="flex flex-wrap gap-x-8 gap-y-3 rounded-lg border border-orange-100 bg-orange-50 p-4">
+          {prepMinutes !== undefined && (
+            <div>
+              <dt class="text-xs font-medium uppercase tracking-wide text-orange-900">Prep time</dt>
+              <dd class="mt-1 font-semibold text-neutral-900">{prepMinutes} min</dd>
+            </div>
+          )}
+          {cookMinutes !== undefined && (
+            <div>
+              <dt class="text-xs font-medium uppercase tracking-wide text-orange-900">Cook time</dt>
+              <dd class="mt-1 font-semibold text-neutral-900">{cookMinutes} min</dd>
+            </div>
+          )}
+          {servings && (
+            <div>
+              <dt class="text-xs font-medium uppercase tracking-wide text-orange-900">Servings</dt>
+              <dd class="mt-1 font-semibold text-neutral-900">{servings}</dd>
+            </div>
+          )}
+        </dl>
+      )
+    }
+
+    {hasStages && <CookingStages stages={stages} />}
+
+    <div class="prose max-w-none prose-headings:tracking-tight prose-img:rounded-lg">
+      <Content />
+    </div>
+
+    {
+      galleries.length > 0 && (
+        <div class="space-y-8">
+          {galleries.map((gallery) => (
+            <ImageGallery layout={gallery.layout} title={gallery.title} photos={gallery.photos} />
+          ))}
+        </div>
+      )
+    }
+  </article>
+</BaseLayout>
+
+<style>
+  .entry-intro {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  /* Title and details on the left, a smaller cover on the right (instead of a full-width photo). */
+  @media (min-width: 768px) {
+    .entry-intro-with-cover {
+      grid-template-columns: minmax(0, 1fr) 20rem;
+      align-items: center;
+      gap: 2rem;
+    }
+  }
+
+  .photo-story {
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid #ffedd5;
+    border-radius: 1.25rem;
+    background: #fff7ed;
+  }
+
+  .photo-story header {
+    padding: 2rem;
+  }
+
+  .photo-story :global(.entry-cover) {
+    border-radius: 0;
+  }
+
+  @media (min-width: 640px) {
+    .photo-story-with-cover {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: center;
+    }
+  }
+</style>

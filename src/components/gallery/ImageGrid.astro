@@ -1,0 +1,218 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import { fullSizeUrl } from '../../utils/images';
+
+export interface GalleryPhoto {
+  src: ImageMetadata;
+  alt: string;
+  caption?: string;
+}
+
+export type GridLayout = 'grid' | 'feature-grid' | 'square-grid' | 'masonry';
+
+interface Props {
+  photos: GalleryPhoto[];
+  layout?: GridLayout;
+}
+
+const { photos, layout: requestedLayout = 'grid' } = Astro.props;
+const fullSizeUrls = await Promise.all(photos.map((photo) => fullSizeUrl(photo.src)));
+
+// The "feature" layout (one big photo plus smaller ones) fills its cells exactly with 3 or 5+ photos.
+// With 1, 2 or 4 it would leave gaps, so those use the even grid instead.
+const featureFits = photos.length === 3 || photos.length >= 5;
+const layout: GridLayout = requestedLayout === 'feature-grid' && !featureFits ? 'grid' : requestedLayout;
+const featureColumns = photos.length >= 5 ? 4 : 3;
+
+const sizesByLayout: Record<GridLayout, string> = {
+  grid: '(min-width: 480px) 416px, calc(100vw - 32px)',
+  'feature-grid': '(min-width: 480px) 400px, calc(100vw - 32px)',
+  'square-grid': '(min-width: 768px) 200px, 33vw',
+  masonry: '(min-width: 768px) 320px, 50vw',
+};
+---
+
+<div
+  class:list={['photo-grid', `photo-grid--${layout}`]}
+  data-count={photos.length}
+  data-columns={featureColumns}
+  style={`--photo-count: ${photos.length}`}
+>
+  {
+    photos.map((photo, index) => (
+      <figure class="photo-grid-item" data-index={index}>
+        <a
+          href={fullSizeUrls[index]}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="photo-grid-link"
+          aria-label={`${photo.alt} (open full-size photo in a new tab)`}
+        >
+          <Image
+            src={photo.src}
+            alt={photo.alt}
+            widths={[360, 720, 1440]}
+            sizes={sizesByLayout[layout]}
+            class="photo-grid-image"
+            loading="lazy"
+          />
+        </a>
+        {photo.caption && <figcaption class="photo-grid-caption">{photo.caption}</figcaption>}
+      </figure>
+    ))
+  }
+</div>
+
+<style>
+  .photo-grid {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .photo-grid-item {
+    margin: 0;
+  }
+
+  .photo-grid-link {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    border-radius: 0.875rem;
+    background: #f5f5f4;
+  }
+
+  .photo-grid-link :global(.photo-grid-image) {
+    display: block;
+    width: 100%;
+    transition: filter 180ms ease;
+  }
+
+  .photo-grid-link:hover :global(.photo-grid-image) {
+    filter: brightness(1.05);
+  }
+
+  .photo-grid-link:focus-visible {
+    outline: 2px solid #9a3412;
+    outline-offset: 4px;
+  }
+
+  .photo-grid-caption {
+    margin-top: 0.5rem;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: #525252;
+  }
+
+  /*
+   * grid: even tiles, never wider than 26rem each, so one photo stays fully visible on screen and two
+   * photos sit side by side. The width cap is photos x 26rem (set from --photo-count).
+   */
+  .photo-grid--grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+    max-width: calc(var(--photo-count, 1) * 26rem + (var(--photo-count, 1) - 1) * 0.75rem);
+  }
+
+  .photo-grid--grid .photo-grid-link :global(.photo-grid-image) {
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+  }
+
+  /*
+   * feature-grid (3+ photos): the first photo is twice the size of the others and the rest fill the cells
+   * beside and below it. Cells are capped at 12rem so the whole block stays compact.
+   * Phones: 2 columns, big photo across the top. 480px+: 3 columns (4 columns from 5 photos).
+   */
+  .photo-grid--feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .photo-grid--feature-grid .photo-grid-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .photo-grid--feature-grid .photo-grid-link {
+    flex: 1;
+    aspect-ratio: 1;
+  }
+
+  .photo-grid--feature-grid .photo-grid-link :global(.photo-grid-image) {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .photo-grid--feature-grid .photo-grid-item:first-child {
+    grid-column: span 2;
+  }
+
+  .photo-grid--feature-grid .photo-grid-item:first-child .photo-grid-link {
+    aspect-ratio: 4 / 3;
+  }
+
+  @media (min-width: 480px) {
+    .photo-grid--feature-grid {
+      grid-template-columns: repeat(3, minmax(0, 12rem));
+      justify-content: start;
+    }
+
+    .photo-grid--feature-grid[data-columns='4'] {
+      grid-template-columns: repeat(4, minmax(0, 12rem));
+    }
+
+    .photo-grid--feature-grid .photo-grid-item:first-child {
+      grid-row: span 2;
+    }
+
+    /* the big photo fills the two rows it spans instead of keeping its own shape */
+    .photo-grid--feature-grid .photo-grid-item:first-child .photo-grid-link {
+      aspect-ratio: auto;
+      min-height: 0;
+    }
+  }
+
+  /* square-grid: tight, Instagram-style uniform thumbnails */
+  .photo-grid--square-grid {
+    gap: 0.4rem;
+    grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+  }
+
+  .photo-grid--square-grid .photo-grid-link :global(.photo-grid-image) {
+    aspect-ratio: 1;
+    object-fit: cover;
+  }
+
+  .photo-grid--square-grid .photo-grid-caption {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 0.75rem;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  /* masonry: variable-height columns, best for mixed portrait/landscape photos */
+  .photo-grid--masonry {
+    display: block;
+    column-count: 2;
+    column-gap: 0.75rem;
+  }
+
+  .photo-grid--masonry .photo-grid-item {
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 0.75rem;
+    break-inside: avoid;
+  }
+
+  .photo-grid--masonry .photo-grid-link :global(.photo-grid-image) {
+    height: auto;
+  }
+
+  @media (min-width: 640px) {
+    .photo-grid--masonry {
+      column-count: 3;
+    }
+  }
+</style>

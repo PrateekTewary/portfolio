@@ -1,0 +1,335 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import { fullSizeUrl } from '../../utils/images';
+
+export interface GalleryPhoto {
+  src: ImageMetadata;
+  alt: string;
+  caption?: string;
+}
+
+interface Props {
+  photos: GalleryPhoto[];
+  /** Unique id prefix. Auto-generated if omitted; set it yourself if a page renders more than one carousel. */
+  id?: string;
+}
+
+const { photos, id = `carousel-${Math.random().toString(36).slice(2, 9)}` } = Astro.props;
+const count = photos.length;
+const fullSizeUrls = await Promise.all(photos.map((photo) => fullSizeUrl(photo.src)));
+
+// Pre-compute per-slide CSS so each radio input reveals its own slide, caption,
+// dot, and prev/next arrows without any client-side JavaScript.
+const generatedStyles = photos
+  .map((_, index) => {
+    const nth = index + 1;
+
+    return `
+      #${id}-radio-${index}:checked ~ .carousel-viewport .carousel-slide:nth-of-type(${nth}) {
+        opacity: 1;
+        z-index: 1;
+        pointer-events: auto;
+      }
+      #${id}-radio-${index}:checked ~ .carousel-captions .carousel-caption:nth-of-type(${nth}) {
+        display: block;
+      }
+      #${id}-radio-${index}:checked ~ .carousel-dots .carousel-dot:nth-of-type(${nth})::after {
+        background: #7c2d12;
+        transform: scale(1.25);
+      }
+      #${id}-radio-${index}:checked ~ .carousel-viewport .carousel-control-set:nth-of-type(${nth}) {
+        display: flex;
+      }
+    `;
+  })
+  .join('\n');
+---
+
+<div class="carousel" data-count={count}>
+  {
+    photos.map((_, index) => (
+      <input
+        type="radio"
+        name={`${id}-select`}
+        id={`${id}-radio-${index}`}
+        class="carousel-radio"
+        checked={index === 0}
+        aria-label={`Show photo ${index + 1} of ${count}`}
+      />
+    ))
+  }
+
+  <div class="carousel-viewport">
+    {
+      photos.map((photo, index) => (
+        <a
+          href={fullSizeUrls[index]}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="carousel-slide"
+          aria-label={`${photo.alt} (open full-size photo in a new tab)`}
+        >
+          <Image
+            src={photo.src}
+            alt={photo.alt}
+            widths={[480, 960, 1440]}
+            sizes="(min-width: 640px) 640px, calc(100vw - 32px)"
+            class="carousel-image"
+            loading="lazy"
+          />
+        </a>
+      ))
+    }
+
+    {
+      count > 1 && (
+        <div class="carousel-controls" aria-hidden="true">
+          {photos.map((_, index) => {
+            const prev = (index - 1 + count) % count;
+            const next = (index + 1) % count;
+            return (
+              <div class="carousel-control-set">
+                <label for={`${id}-radio-${prev}`} class="carousel-arrow carousel-arrow-prev">
+                  &lsaquo;
+                </label>
+                <label for={`${id}-radio-${next}`} class="carousel-arrow carousel-arrow-next">
+                  &rsaquo;
+                </label>
+              </div>
+            );
+          })}
+        </div>
+      )
+    }
+  </div>
+
+  <div class="carousel-captions">
+    {
+      photos.map((photo, index) => (
+        <p class="carousel-caption">
+          <span class="carousel-caption-count">
+            {index + 1} / {count}
+          </span>
+          {photo.caption && <span class="carousel-caption-text">{photo.caption}</span>}
+        </p>
+      ))
+    }
+  </div>
+
+  {
+    count > 1 && (
+      <div class="carousel-dots" role="tablist" aria-label="Photos">
+        {photos.map((photo, index) => (
+          <label
+            for={`${id}-radio-${index}`}
+            class="carousel-dot"
+            aria-label={`Go to photo ${index + 1} of ${count}: ${photo.alt}`}
+          />
+        ))}
+      </div>
+    )
+  }
+</div>
+
+<style set:html={generatedStyles} />
+
+<style>
+  .carousel {
+    max-width: 40rem;
+    margin-inline: auto;
+  }
+
+  .carousel-radio {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .carousel-viewport {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: 0.875rem;
+    background: #f5f5f4;
+    /* vertical scrolling stays native; horizontal swipes are handled by the script below */
+    touch-action: pan-y;
+  }
+
+  .carousel-slide {
+    position: absolute;
+    inset: 0;
+    display: block;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 240ms ease;
+  }
+
+  .carousel-slide :global(.carousel-image) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .carousel-controls {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .carousel-control-set {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding-inline: 0.5rem;
+    pointer-events: none;
+  }
+
+  .carousel-arrow {
+    display: grid;
+    width: 2.75rem;
+    height: 2.75rem;
+    place-items: center;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 85%);
+    color: #7c2d12;
+    font-size: 1.75rem;
+    line-height: 1;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: background-color 150ms ease;
+  }
+
+  .carousel-arrow:hover {
+    background: #fff;
+  }
+
+  .carousel-captions {
+    min-height: 2.75rem;
+    margin-top: 0.75rem;
+    text-align: center;
+  }
+
+  .carousel-caption {
+    display: none;
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #404040;
+  }
+
+  .carousel-caption-count {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #a3a3a3;
+  }
+
+  .carousel-caption-text {
+    display: block;
+    margin-top: 0.125rem;
+  }
+
+  /* Each dot is a 24px tap target; the visible dot is drawn smaller inside it. */
+  .carousel-dots {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 0.25rem;
+  }
+
+  .carousel-dot {
+    position: relative;
+    width: 1.5rem;
+    height: 1.5rem;
+    cursor: pointer;
+  }
+
+  .carousel-dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 50%;
+    background: #d4d4d4;
+    transition:
+      background-color 150ms ease,
+      transform 150ms ease;
+  }
+
+  .carousel-dot:hover::after {
+    background: #a3a3a3;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .carousel-slide,
+    .carousel-dot::after {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  // Swipe left/right on touch screens. The radio inputs drive everything else, so selecting one is enough.
+  const SWIPE_DISTANCE = 40;
+
+  document.querySelectorAll<HTMLElement>('.carousel').forEach((carousel) => {
+    const radios = Array.from(carousel.querySelectorAll<HTMLInputElement>('input.carousel-radio'));
+    const viewport = carousel.querySelector<HTMLElement>('.carousel-viewport');
+    if (!viewport || radios.length < 2) return;
+
+    let startX = 0;
+    let startY = 0;
+    let tracking = false;
+    let swiped = false;
+
+    viewport.addEventListener(
+      'touchstart',
+      (event) => {
+        tracking = event.touches.length === 1;
+        swiped = false;
+        startX = event.touches[0].clientX;
+        startY = event.touches[0].clientY;
+      },
+      { passive: true },
+    );
+
+    viewport.addEventListener(
+      'touchend',
+      (event) => {
+        if (!tracking) return;
+        tracking = false;
+        const dx = event.changedTouches[0].clientX - startX;
+        const dy = event.changedTouches[0].clientY - startY;
+        if (Math.abs(dx) < SWIPE_DISTANCE || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+
+        const current = Math.max(0, radios.findIndex((radio) => radio.checked));
+        radios[(current + (dx < 0 ? 1 : -1) + radios.length) % radios.length].checked = true;
+        swiped = true;
+      },
+      { passive: true },
+    );
+
+    // A swipe must not also open the full-size photo.
+    viewport.addEventListener(
+      'click',
+      (event) => {
+        if (!swiped) return;
+        event.preventDefault();
+        swiped = false;
+      },
+      true,
+    );
+  });
+</script>

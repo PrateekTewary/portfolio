@@ -1,0 +1,158 @@
+---
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+import { fullSizeUrl } from '../utils/images';
+
+interface Props {
+  stages: CollectionEntry<'cooking'>['data']['stages'];
+}
+
+const { stages } = Astro.props;
+const photoCount = stages.reduce((total, stage) => total + stage.photos.length, 0);
+const fullSizeUrls = await Promise.all(
+  stages.map((stage) => Promise.all(stage.photos.map((photo) => fullSizeUrl(photo.src)))),
+);
+---
+
+<section id="cooking-process" aria-labelledby="process-heading" class="scroll-mt-32">
+  <div class="mb-8 flex flex-wrap items-baseline justify-between gap-3 border-b border-neutral-200 pb-5">
+    <h2 id="process-heading" class="text-2xl font-semibold tracking-tight text-neutral-950">
+      Step by step
+    </h2>
+    <p class="text-xs font-medium uppercase tracking-widest text-neutral-500">
+      {stages.length} {stages.length === 1 ? 'stage' : 'stages'}
+      <span aria-hidden="true" class="mx-2">/</span>
+      {photoCount} {photoCount === 1 ? 'photo' : 'photos'}
+    </p>
+  </div>
+
+  <ol class="space-y-12">
+    {
+      stages.map((stage, index) => (
+        <li class="stage" aria-labelledby={`stage-${index + 1}-heading`}>
+          <div class="mb-5 flex items-start gap-4">
+            <span class="flex size-11 shrink-0 items-center justify-center rounded-full border border-orange-200 bg-orange-50 font-mono text-sm text-orange-900" aria-hidden="true">
+              {String(index + 1).padStart(2, '0')}
+            </span>
+            <div class="pt-2">
+              <h3 id={`stage-${index + 1}-heading`} class="text-lg font-semibold tracking-tight text-neutral-900">
+                <span class="sr-only">Stage {index + 1}: </span>{stage.title}
+              </h3>
+              {stage.note && <p class="mt-2 text-sm leading-7 text-neutral-600">{stage.note}</p>}
+            </div>
+          </div>
+
+          <div class="stage-photos" data-count={stage.photos.length}>
+            {stage.photos.map((photo, photoIndex) => (
+              <a
+                href={fullSizeUrls[index][photoIndex]}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="photo"
+                aria-label={`${photo.alt} (open full-size photo in a new tab)`}
+              >
+                <Image
+                  src={photo.src}
+                  alt={photo.alt}
+                  widths={[360, 720, 1440]}
+                  sizes={stage.photos.length === 1
+                    ? '(min-width: 640px) 512px, calc(100vw - 32px)'
+                    : '(min-width: 768px) 368px, (min-width: 480px) 50vw, calc(100vw - 32px)'}
+                  class="stage-photo"
+                  loading="lazy"
+                />
+                <span class="photo-expand" aria-hidden="true">&nearr;</span>
+              </a>
+            ))}
+          </div>
+        </li>
+      ))
+    }
+  </ol>
+</section>
+
+<style>
+  .stage-photos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .stage-photos[data-count='1'] {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 32rem;
+    margin-inline: auto;
+  }
+
+  .photo {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    border-radius: 0.875rem;
+    background: #f5f5f4;
+  }
+
+  .photo :global(.stage-photo) {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: contain;
+    transition: filter 180ms ease;
+  }
+
+  .photo:hover :global(.stage-photo) {
+    filter: brightness(1.05);
+  }
+
+  .photo:focus-visible {
+    outline: 2px solid #9a3412;
+    outline-offset: 4px;
+  }
+
+  .photo-expand {
+    position: absolute;
+    right: 0.65rem;
+    bottom: 0.65rem;
+    display: grid;
+    width: 1.75rem;
+    height: 1.75rem;
+    place-items: center;
+    border-radius: 50%;
+    background: #fff7ed;
+    color: #7c2d12;
+    font-size: 0.875rem;
+  }
+
+  @media (min-width: 480px) {
+    .stage-photos[data-count='3'] {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .stage-photos[data-count='5'] {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .stage-photos[data-count='5'] .photo:first-child {
+      grid-column: span 2;
+      grid-row: span 2;
+    }
+
+    .stage-photos[data-count='5'] .photo:first-child :global(.stage-photo) {
+      height: 100%;
+    }
+  }
+
+  @media (max-width: 479px) {
+    .stage-photos[data-count='3'] .photo:first-child,
+    .stage-photos[data-count='5'] .photo:first-child {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .photo :global(.stage-photo) {
+      transition: none;
+    }
+  }
+</style>
