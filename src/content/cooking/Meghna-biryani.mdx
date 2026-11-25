@@ -14,18 +14,43 @@ cover:
 import ImageGallery from '../../components/ImageGallery.astro';
 import MeghnaBiryani1 from './images/Meghna-biryani/meghna-biryani-1.jpg';
 import MeghnaBiryani2 from './images/Meghna-biryani/meghna-biryani-2.jpg';
+import BaristaOnion from './images/Meghna-biryani/barista-onion-fry.jpg';
+import ChickenFried from './images/Meghna-biryani/chicken-fried.jpg';
+import ChickenGravy from './images/Meghna-biryani/chicken-gravy.jpg';
+import DahiOilSeparation from './images/Meghna-biryani/dahi-oil-separation.jpg';
+import DahiPutInGravy from './images/Meghna-biryani/dahi-put-in-gravy.jpg';
+import GravyBeforeChicken from './images/Meghna-biryani/gravy-before-chicken.jpg';
+import OnionFry from './images/Meghna-biryani/onion-fry.jpg';
+import MeghnaChicken from './images/Meghna-biryani/meghna-chicken.jpg'
 
 Another recipe from [instagram](https://www.instagram.com/reel/DcNmhuTRcDD/?mdxt=MXM0NGZyb25xbnR3MA==), this one I nailed!
 
 Followed the recipe end to end exactly, just used chicken instead of paneer like done in the reel. It came out perfectly!
 
 Also, I didn't do gravy and rice separate. I layered the gravy and gace dum, it was good.
-Not a lot of photos I have but you have to take my word for it/
+Not a lot of photos I have but you have to take my word for it!
 
 <ImageGallery
   layout="feature-grid"
   photos={[
     { src: MeghnaBiryani1, alt: "Meghna Birayni", caption: "Meghna Birayni" },
     { src: MeghnaBiryani2, alt: "Meghna Birayni", caption: "Meghna Birayni" },
+  ]}
+/>
+
+
+I made it again and here you go, the gravy.
+
+<ImageGallery
+  layout="feature-grid"
+  photos={[
+    { src: MeghnaChicken, alt: "Meghna chicken gravy", caption:"Meghna Chicken gravy!"},
+    { src: BaristaOnion, alt: "Onion barist", caption: "Onion barist for toppings" },
+    { src: ChickenFried, alt: "Fried chicken", caption: "This goes in gravy, flour coated chicken" },
+    { src: OnionFry, alt: "Onions frying for gravy", caption: "Onions in oil" },
+    { src: DahiPutInGravy, alt: "Gravy taking color", caption: "Gravy taking its form" },
+    { src: DahiOilSeparation, alt: "Gravy oil separation", caption: "Gravy getting the hang of it" },
+    { src: GravyBeforeChicken, alt: "Gravy base without chicken", caption: "Complete gravy base before chicken" },
+    { src: ChickenGravy, alt: "Gravy after chicken", caption: "Gravy after chicken" }
   ]}
 />
